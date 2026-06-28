@@ -1,0 +1,19 @@
+\section{Threats to Validity}
+
+\subsection{Internal Validity}
+
+The main internal validity threat is uncontrolled compute state. The experiment runs in a cloud-managed Databricks environment where cluster warm-up, cache state, scheduling, and resource allocation are not fully controlled. These factors can affect runtime overhead independently of the treatment. To reduce this threat, warm-up runs are excluded and median summaries are preferred.
+
+Another internal threat is history effect. If tables are not reset correctly between tamper scenarios, stale data or stale ledger records may create false positives or false negatives. The procedure therefore includes an explicit RESET\_BASELINE step before moving to the next scenario.
+
+\subsection{External Validity}
+
+The experiment uses one Databricks workspace and synthetic transaction data. The results may not generalize to AWS Glue, on-premise Spark, dbt, Snowflake, or production lakehouse environments. Synthetic data also lacks the distribution skew, schema drift, missing values, and operational complexity of real production datasets. Future replication should use multiple environments and anonymized production-like data.
+
+\subsection{Construct Validity}
+
+The system should not be interpreted as a full blockchain. The evaluated construct is a hash-linked tamper-evident ledger. It provides integrity evidence through hashes and previous-hash links, but it does not provide decentralized consensus or public-chain immutability. Another construct threat is the detection-rate metric. The reported 100\% detection rate applies only to the six tamper scenarios selected for the experiment.
+
+\subsection{Conclusion Validity}
+
+The number of tamper scenarios, record-count levels, and benchmark repetitions is limited. This makes the results useful as quasi-experimental evidence but insufficient for strong statistical conclusions. The overhead values are approximate because they were taken from dashboard observations rather than a full exported raw benchmark dataset. At least thirty repeated runs per record-count level would be needed for confidence intervals, distribution plots, and stronger effect-size analysis.
