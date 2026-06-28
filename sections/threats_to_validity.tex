@@ -4,16 +4,22 @@
 
 Mối đe dọa chính đến tính hợp lệ nội tại là trạng thái compute không được kiểm soát hoàn toàn. Thực nghiệm chạy trong môi trường Databricks do cloud quản lý, trong đó cluster warm-up, cache state, scheduling và resource allocation không cố định. Các yếu tố này có thể ảnh hưởng đến runtime overhead độc lập với treatment. Để giảm rủi ro này, warm-up runs được loại khỏi phân tích chính và median được ưu tiên hơn mean.
 
-Một mối đe dọa khác là history effect. Nếu các bảng không được reset đúng giữa các tamper scenarios, dữ liệu cũ hoặc ledger record cũ có thể tạo false positive hoặc false negative. Vì vậy, procedure bao gồm bước RESET\_BASELINE bắt buộc trước khi chuyển sang scenario tiếp theo.
+Một mối đe dọa khác là history effect. Nếu các bảng không được reset đúng giữa các tamper scenarios, dữ liệu cũ hoặc ledger record cũ có thể tạo false positive hoặc false negative. Vì vậy, procedure bao gồm bước RESET\_BASELINE bắt buộc trước khi chuyển sang scenario tiếp theo. Ngoài ra, vì researcher thiết kế cả tamper scenario và verification logic, tồn tại nguy cơ alignment giữa test case và cơ chế phát hiện. Nghiên cứu giảm rủi ro này bằng cách công bố rõ scenarios, expected outcomes và thuật toán verification.
 
 \subsection{Tính hợp lệ ngoại tại}
 
 Thực nghiệm sử dụng một Databricks workspace và dữ liệu giao dịch synthetic. Kết quả có thể không khái quát trực tiếp sang AWS Glue, Spark on-premise, dbt, Snowflake hoặc môi trường lakehouse production. Dữ liệu synthetic cũng thiếu các đặc điểm như skewed distribution, schema drift, missing values và operational complexity của dữ liệu thực tế. Các nghiên cứu lặp lại trong tương lai nên triển khai trên nhiều môi trường và sử dụng dữ liệu production-like đã ẩn danh.
 
+Một giới hạn ngoại tại khác là tập tamper scenarios còn nhỏ. Sáu scenarios trong bài báo đại diện cho các nhóm thay đổi phổ biến đối với data, ledger payload và chain link, nhưng không bao phủ toàn bộ không gian lỗi hoặc hành vi chỉnh sửa trong hệ thống thật. Vì vậy, kết luận ``phát hiện 100\%'' chỉ có ý nghĩa trong phạm vi scenarios đã định nghĩa.
+
 \subsection{Tính hợp lệ khái niệm}
 
 Hệ thống không nên được diễn giải là Blockchain đầy đủ. Construct được đánh giá là Hash-linked Tamper-evident Ledger. Cơ chế này cung cấp bằng chứng integrity thông qua hashes và previous-hash links, nhưng không cung cấp decentralized consensus hoặc tính bất biến của public chain. Một mối đe dọa construct khác là metric detection rate. Detection rate 100\% chỉ áp dụng cho sáu tamper scenarios được lựa chọn trong thực nghiệm.
 
+Ngoài ra, khái niệm tamper-evident cần được hiểu là phát hiện và cung cấp bằng chứng về thay đổi, không phải ngăn chặn thay đổi. Nếu người đọc kỳ vọng một cơ chế prevention hoặc access control, họ có thể hiểu sai mục tiêu nghiên cứu. Bài báo vì vậy phân biệt rõ tamper-evident, tamper-resistant và Blockchain đầy đủ.
+
 \subsection{Tính hợp lệ kết luận}
 
 Số lượng tamper scenarios, record-count levels và benchmark repetitions còn hạn chế. Điều này làm cho kết quả hữu ích như bằng chứng bán thực nghiệm, nhưng chưa đủ cho kết luận thống kê mạnh. Các giá trị overhead là approximate vì được lấy từ dashboard observation thay vì raw benchmark dataset được export đầy đủ. Cần ít nhất khoảng 30 repeated runs cho mỗi record-count level để tính confidence intervals, distribution plots và effect-size analysis mạnh hơn.
+
+Kết luận của nghiên cứu vì vậy được trình bày theo dạng bounded claim. Nghiên cứu có thể kết luận rằng treatment phát hiện toàn bộ scenarios đã kiểm thử trong môi trường Databricks cụ thể, nhưng chưa thể kết luận rằng treatment phát hiện mọi loại thay đổi trái phép trong mọi Data Pipeline production.
