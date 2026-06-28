@@ -1,0 +1,39 @@
+\section{Tổng quan nghiên cứu và khoảng trống}
+
+\subsection{Audit log và database log}
+
+Audit log là cơ chế phổ biến để ghi nhận thao tác trên hệ thống dữ liệu. Trong cơ sở dữ liệu, log có thể ghi lại thời điểm thay đổi, tài khoản thực hiện và loại thao tác như INSERT, UPDATE hoặc DELETE. Cách tiếp cận này phù hợp cho điều tra sau sự cố và quản trị vận hành. Tuy nhiên, khi áp dụng cho bài toán kiểm chứng toàn vẹn dữ liệu, audit log có một hạn chế quan trọng: log thường nằm trong cùng hệ thống và cùng ranh giới quản trị với dữ liệu. Vì vậy, audit log là nguồn thông tin hữu ích, nhưng chưa đủ để đóng vai trò bằng chứng độc lập cho trạng thái dữ liệu sau khi pipeline đã hoàn tất.
+
+\subsection{Checksum và hash ở tầng ứng dụng}
+
+Checksum hoặc cryptographic hash thường được dùng để kiểm tra dữ liệu có bị thay đổi hay không. Với một dataset, hệ thống có thể tính hash của nội dung tại thời điểm ghi và so sánh lại ở thời điểm kiểm tra. Chuẩn SHA-256 trong FIPS 180-4 là một ví dụ về hàm băm mật mã được sử dụng rộng rãi \cite{nist1804}. Tuy nhiên, checksum đơn lẻ thường chỉ xác thực một snapshot, không tự động liên kết các stage trong pipeline. Nếu không có bằng chứng về thứ tự transformation, hệ thống khó xác định điểm đầu tiên bị phá vỡ và stage bị ảnh hưởng.
+
+\subsection{Merkle tree và Blockchain}
+
+Merkle tree cho phép tổng hợp nhiều hash con thành một root hash, qua đó hỗ trợ kiểm chứng một phần dữ liệu mà không cần đọc toàn bộ dataset. Cấu trúc này được sử dụng trong nhiều hệ thống phân tán và Blockchain. Blockchain mở rộng ý tưởng liên kết bằng hash bằng cách bổ sung mạng ngang hàng, consensus và replicated ledger \cite{nakamoto2008bitcoin}. Các đặc tính này tạo ra mức bảo đảm mạnh hơn về bất biến dữ liệu, nhưng cũng kéo theo overhead kiến trúc và vận hành. Với một Data Pipeline nội bộ chạy trong môi trường học thuật hoặc doanh nghiệp, mục tiêu thường không phải triển khai public Blockchain đầy đủ, mà là tạo một lớp bằng chứng nhẹ để phát hiện sai lệch dữ liệu.
+
+\subsection{Data lineage và data provenance}
+
+Data lineage mô tả luồng di chuyển và biến đổi của dữ liệu từ nguồn đến đích. Data provenance tập trung vào nguồn gốc và lịch sử hình thành của dữ liệu. Trong quản trị dữ liệu, lineage hỗ trợ phân tích tác động, debug pipeline và truy vết nguồn gốc chỉ số. Tuy nhiên, lineage không nhất thiết đảm bảo integrity nếu không được gắn với evidence có thể kiểm chứng bằng hash. Do đó, trong nghiên cứu này, lineage được dùng như lớp ngữ cảnh để giải thích vị trí sai lệch, còn hash-linked ledger đóng vai trò lớp kiểm chứng.
+
+\subsection{Khoảng trống so sánh}
+
+Bảng~\ref{tab:related_comparison} tóm tắt so sánh các cơ chế liên quan. Khoảng trống chính là thiếu một đánh giá có kiểm soát về cơ chế kết hợp giữa hash evidence, linked blocks và lineage context trong Data Pipeline nhiều stage. Cơ chế đề xuất không thay thế audit log, Delta transaction log hoặc Blockchain đầy đủ; thay vào đó, nó bổ sung một lớp tamper-evident nhẹ có thể đo lường trong thiết kế bán thực nghiệm.
+
+\begin{table}[t]
+\caption{So sánh các cơ chế liên quan đến kiểm chứng toàn vẹn dữ liệu}
+\centering
+\begin{tabular}{p{0.25\linewidth}p{0.22\linewidth}p{0.34\linewidth}}
+\toprule
+\textbf{Cơ chế} & \textbf{Ưu điểm} & \textbf{Hạn chế trong Data Pipeline} \\
+\midrule
+Audit log & Ghi nhận thao tác & Cùng trust boundary với dữ liệu. \\
+Checksum & Đơn giản, nhanh & Không liên kết stage-to-stage. \\
+Merkle tree & Kiểm chứng hiệu quả & Phức tạp hơn cho demo ngắn hạn. \\
+Blockchain & Bất biến mạnh & Overhead và consensus không phù hợp MVP. \\
+Lineage & Truy vết ngữ cảnh & Không tự bảo đảm integrity. \\
+\hashledger{} & Nhẹ, có chain evidence & Chưa có consensus và trust boundary độc lập. \\
+\bottomrule
+\end{tabular}
+\label{tab:related_comparison}
+\end{table}
