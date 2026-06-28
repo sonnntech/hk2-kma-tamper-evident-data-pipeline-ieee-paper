@@ -1,19 +1,19 @@
-\section{Threats to Validity}
+\section{Các mối đe dọa đến tính hợp lệ}
 
-\subsection{Internal Validity}
+\subsection{Tính hợp lệ nội tại}
 
-The main internal validity threat is uncontrolled compute state. The experiment runs in a cloud-managed Databricks environment where cluster warm-up, cache state, scheduling, and resource allocation are not fully controlled. These factors can affect runtime overhead independently of the treatment. To reduce this threat, warm-up runs are excluded and median summaries are preferred.
+Mối đe dọa chính đến tính hợp lệ nội tại là trạng thái compute không được kiểm soát hoàn toàn. Thực nghiệm chạy trong môi trường Databricks do cloud quản lý, trong đó cluster warm-up, cache state, scheduling và resource allocation không cố định. Các yếu tố này có thể ảnh hưởng đến runtime overhead độc lập với treatment. Để giảm rủi ro này, warm-up runs được loại khỏi phân tích chính và median được ưu tiên hơn mean.
 
-Another internal threat is history effect. If tables are not reset correctly between tamper scenarios, stale data or stale ledger records may create false positives or false negatives. The procedure therefore includes an explicit RESET\_BASELINE step before moving to the next scenario.
+Một mối đe dọa khác là history effect. Nếu các bảng không được reset đúng giữa các tamper scenarios, dữ liệu cũ hoặc ledger record cũ có thể tạo false positive hoặc false negative. Vì vậy, procedure bao gồm bước RESET\_BASELINE bắt buộc trước khi chuyển sang scenario tiếp theo.
 
-\subsection{External Validity}
+\subsection{Tính hợp lệ ngoại tại}
 
-The experiment uses one Databricks workspace and synthetic transaction data. The results may not generalize to AWS Glue, on-premise Spark, dbt, Snowflake, or production lakehouse environments. Synthetic data also lacks the distribution skew, schema drift, missing values, and operational complexity of real production datasets. Future replication should use multiple environments and anonymized production-like data.
+Thực nghiệm sử dụng một Databricks workspace và dữ liệu giao dịch synthetic. Kết quả có thể không khái quát trực tiếp sang AWS Glue, Spark on-premise, dbt, Snowflake hoặc môi trường lakehouse production. Dữ liệu synthetic cũng thiếu các đặc điểm như skewed distribution, schema drift, missing values và operational complexity của dữ liệu thực tế. Các nghiên cứu lặp lại trong tương lai nên triển khai trên nhiều môi trường và sử dụng dữ liệu production-like đã ẩn danh.
 
-\subsection{Construct Validity}
+\subsection{Tính hợp lệ khái niệm}
 
-The system should not be interpreted as a full blockchain. The evaluated construct is a hash-linked tamper-evident ledger. It provides integrity evidence through hashes and previous-hash links, but it does not provide decentralized consensus or public-chain immutability. Another construct threat is the detection-rate metric. The reported 100\% detection rate applies only to the six tamper scenarios selected for the experiment.
+Hệ thống không nên được diễn giải là Blockchain đầy đủ. Construct được đánh giá là Hash-linked Tamper-evident Ledger. Cơ chế này cung cấp bằng chứng integrity thông qua hashes và previous-hash links, nhưng không cung cấp decentralized consensus hoặc tính bất biến của public chain. Một mối đe dọa construct khác là metric detection rate. Detection rate 100\% chỉ áp dụng cho sáu tamper scenarios được lựa chọn trong thực nghiệm.
 
-\subsection{Conclusion Validity}
+\subsection{Tính hợp lệ kết luận}
 
-The number of tamper scenarios, record-count levels, and benchmark repetitions is limited. This makes the results useful as quasi-experimental evidence but insufficient for strong statistical conclusions. The overhead values are approximate because they were taken from dashboard observations rather than a full exported raw benchmark dataset. At least thirty repeated runs per record-count level would be needed for confidence intervals, distribution plots, and stronger effect-size analysis.
+Số lượng tamper scenarios, record-count levels và benchmark repetitions còn hạn chế. Điều này làm cho kết quả hữu ích như bằng chứng bán thực nghiệm, nhưng chưa đủ cho kết luận thống kê mạnh. Các giá trị overhead là approximate vì được lấy từ dashboard observation thay vì raw benchmark dataset được export đầy đủ. Cần ít nhất khoảng 30 repeated runs cho mỗi record-count level để tính confidence intervals, distribution plots và effect-size analysis mạnh hơn.
