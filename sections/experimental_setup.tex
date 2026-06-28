@@ -6,7 +6,90 @@ Nguyên mẫu triển khai một pipeline phân tích gồm bốn stage: Source,
 
 Đối với mỗi stage, ledger ghi nhận stage name, record count, schema hash, batch hash, block hash, previous block hash, transformation metadata, timestamp và pipeline run identifier. Batch hash đại diện cho nội dung đã canonicalize của output tại stage. Schema hash đại diện cho cấu trúc dữ liệu. Block hash là digest mật mã của payload trong block. Previous hash liên kết block hiện tại với block trước đó trong cùng pipeline run.
 
+\subsection{Cấu trúc block ledger}
+
+Cấu trúc block được thiết kế để đủ đơn giản cho MVP nhưng vẫn bảo toàn các bằng chứng chính cần cho verification. Mỗi block chứa ba nhóm thông tin: định danh run, evidence của stage và chain metadata. Định danh run giúp gom các block thuộc cùng một lần chạy pipeline. Evidence của stage giúp phát hiện thay đổi dữ liệu hoặc schema. Chain metadata giúp phát hiện việc sửa payload hoặc phá liên kết block.
+
+\begin{table}[t]
+\caption{Cấu trúc logic của một ledger block}
+\centering
+\begin{tabular}{p{0.30\linewidth}p{0.54\linewidth}}
+\toprule
+\textbf{Trường} & \textbf{Ý nghĩa} \\
+\midrule
+pipeline\_run\_id & Định danh một lần chạy pipeline. \\
+stage & Source, Bronze, Silver hoặc Gold. \\
+record\_count & Số lượng bản ghi tại stage. \\
+schema\_hash & Hash của cấu trúc schema. \\
+batch\_hash & Hash của nội dung dữ liệu canonicalized. \\
+previous\_hash & Block hash của block trước đó. \\
+block\_hash & Hash của payload block hiện tại. \\
+transformation & Metadata mô tả transformation. \\
+\bottomrule
+\end{tabular}
+\label{tab:block_structure}
+\end{table}
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[node distance=0.25cm,>=Latex, every node/.style={font=\scriptsize}]
+\tikzstyle{field}=[draw, rounded corners, text width=6.1cm, align=center, minimum height=0.35cm]
+\node[field] (f1) {pipeline\_run\_id, stage, timestamp};
+\node[field, below=of f1] (f2) {record\_count, schema\_hash, batch\_hash};
+\node[field, below=of f2] (f3) {transformation metadata};
+\node[field, below=of f3] (f4) {previous\_hash};
+\node[field, below=of f4] (f5) {block\_hash = SHA256(payload)};
+\draw[->] (f1) -- (f2);
+\draw[->] (f2) -- (f3);
+\draw[->] (f3) -- (f4);
+\draw[->] (f4) -- (f5);
+\end{tikzpicture}
+\caption{Block payload và hash evidence trong ledger.}
+\label{fig:block_structure}
+\end{figure}
+
 Verification engine tính toán lại bằng chứng ở từng stage và so sánh với ledger đã lưu. Sai lệch content hash chỉ ra khả năng data tampering. Sai lệch record count chỉ ra khả năng insert hoặc delete. Sai lệch block payload chỉ ra ledger tampering. Sai lệch previous hash chỉ ra chain link bị phá vỡ.
+
+\subsection{Thuật toán tạo ledger và kiểm chứng}
+
+Bảng~\ref{tab:algo_ledger} mô tả thuật toán tạo ledger ở mức khái niệm. Tại mỗi stage, pipeline canonicalize dữ liệu, tính schema hash, batch hash, lấy previous hash của block trước, sau đó tạo block hash cho payload hiện tại.
+
+\begin{table}[t]
+\caption{Algorithm 1: Ledger Generation}
+\centering
+\begin{tabular}{p{0.08\linewidth}p{0.76\linewidth}}
+\toprule
+1 & Nhận output dataset của stage hiện tại. \\
+2 & Chuẩn hóa thứ tự cột và bản ghi để canonicalize dữ liệu. \\
+3 & Tính schema\_hash và batch\_hash bằng SHA-256. \\
+4 & Lấy previous\_hash từ block trước trong cùng pipeline\_run\_id. \\
+5 & Tạo block payload gồm run id, stage, counts, hashes và metadata. \\
+6 & Tính block\_hash = SHA256(block payload). \\
+7 & Ghi block vào blockchain\_ledger và ghi lineage event. \\
+\bottomrule
+\end{tabular}
+\label{tab:algo_ledger}
+\end{table}
+
+Bảng~\ref{tab:algo_verify} mô tả thuật toán verification. Điểm quan trọng là verification không chỉ so sánh dữ liệu với batch hash, mà còn kiểm tra block hash và previous hash để phát hiện sai lệch trong ledger hoặc chain link.
+
+\begin{table}[t]
+\caption{Algorithm 2: Integrity Verification}
+\centering
+\begin{tabular}{p{0.08\linewidth}p{0.76\linewidth}}
+\toprule
+1 & Đọc toàn bộ blocks theo pipeline\_run\_id và thứ tự stage. \\
+2 & Với mỗi block, tính lại record count, schema hash và batch hash. \\
+3 & Nếu record count khác ledger, trả về RECORD\_COUNT\_MISMATCH. \\
+4 & Nếu batch hash khác ledger, trả về DATA\_TAMPERED. \\
+5 & Tính lại block hash từ payload đã lưu. \\
+6 & Nếu block hash không khớp, trả về BLOCK\_TAMPERED. \\
+7 & Nếu previous hash không khớp block trước, trả về CHAIN\_BROKEN. \\
+8 & Nếu không có sai lệch, trả về VALID. \\
+\bottomrule
+\end{tabular}
+\label{tab:algo_verify}
+\end{table}
 
 \subsection{Tamper Scenarios}
 
@@ -29,6 +112,29 @@ MODIFY\_LEDGER\_PREVIOUS\_HASH & CHAIN\_BROKEN \\
 \bottomrule
 \end{tabular}
 \label{tab:scenarios}
+\end{table}
+
+\subsection{Môi trường và dữ liệu}
+
+Thực nghiệm sử dụng Databricks Free Edition với PySpark và Delta Table. Dataset là dữ liệu giao dịch synthetic, không chứa dữ liệu cá nhân thật. Cấu hình mặc định dùng record count 10.000 và random seed 42. Benchmark dùng bốn mức record count: 1K, 5K, 10K và 50K. Việc dùng synthetic data giúp giảm rủi ro đạo đức và hỗ trợ tái lập, nhưng làm giảm external validity so với dữ liệu production.
+
+\begin{table}[t]
+\caption{Môi trường thực nghiệm}
+\centering
+\begin{tabular}{p{0.32\linewidth}p{0.52\linewidth}}
+\toprule
+\textbf{Thành phần} & \textbf{Giá trị} \\
+\midrule
+Compute & Databricks Free Edition / cloud workspace \\
+Processing & PySpark, Delta Table \\
+Hash function & SHA-256 \\
+Dataset & Synthetic transactions \\
+Default size & 10.000 records \\
+Benchmark sizes & 1K, 5K, 10K, 50K records \\
+Seed & 42 \\
+\bottomrule
+\end{tabular}
+\label{tab:environment}
 \end{table}
 
 \subsection{Quy trình thực nghiệm}
