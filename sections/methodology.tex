@@ -1,0 +1,80 @@
+\section{Methodology}
+
+\subsection{Justification for Quasi-Experimental Design}
+
+This study follows a quasi-experimental methodology because the intervention can be implemented and measured, but the environment cannot be fully controlled. A true experiment would require random assignment, controlled compute resources, stable network conditions, repeated execution under identical resource states, and a representative population of real attackers. These assumptions are not realistic in the selected Databricks-based environment.
+
+The experiment controls what can be controlled: the pipeline structure, synthetic data generation seed, predefined tamper scenarios, verification logic, measured variables, and run procedure. The experiment documents what cannot be controlled: cloud scheduling, warm-up behavior, cache state, network latency, and the fact that tamper scenarios are researcher-defined proxies rather than a random sample of real-world attacks. Therefore, the study reports quasi-experimental evidence of association between the treatment and observed integrity outcomes, not a universal causal claim.
+
+\subsection{Treatment and Control Conditions}
+
+The treatment is the addition of a hash-linked tamper-evident ledger, lineage recorder, and verification engine to a standard data pipeline. The control condition depends on the research question. For detection and traceability, the clean pipeline state with no tamper scenario acts as the pre-test control. For overhead measurement, the baseline pipeline without ledger and verification instrumentation acts as the non-equivalent control.
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[node distance=0.75cm,>=Latex, every node/.style={font=\scriptsize}]
+\tikzstyle{stage}=[draw, rounded corners, minimum width=1.55cm, minimum height=0.45cm, align=center]
+\tikzstyle{ledger}=[draw, dashed, rounded corners, minimum width=1.75cm, minimum height=0.45cm, align=center]
+\node[stage] (src) {Source};
+\node[stage, right=of src] (brz) {Bronze};
+\node[stage, right=of brz] (slv) {Silver};
+\node[stage, right=of slv] (gld) {Gold};
+\node[ledger, below=0.65cm of src] (b1) {Block 1};
+\node[ledger, below=0.65cm of brz] (b2) {Block 2};
+\node[ledger, below=0.65cm of slv] (b3) {Block 3};
+\node[ledger, below=0.65cm of gld] (b4) {Block 4};
+\draw[->] (src) -- (brz);
+\draw[->] (brz) -- (slv);
+\draw[->] (slv) -- (gld);
+\draw[->] (src) -- (b1);
+\draw[->] (brz) -- (b2);
+\draw[->] (slv) -- (b3);
+\draw[->] (gld) -- (b4);
+\draw[->, dashed] (b1) -- node[above]{prev hash} (b2);
+\draw[->, dashed] (b2) -- node[above]{prev hash} (b3);
+\draw[->, dashed] (b3) -- node[above]{prev hash} (b4);
+\end{tikzpicture}
+\caption{Hash-linked tamper-evident ledger for a multi-stage data pipeline.}
+\label{fig:architecture}
+\end{figure}
+
+\subsection{Hypotheses}
+
+\begin{table}[t]
+\caption{Research Hypotheses}
+\centering
+\begin{tabular}{p{0.12\linewidth}p{0.75\linewidth}}
+\toprule
+\textbf{ID} & \textbf{Hypothesis} \\
+\midrule
+H1 & The treatment detects all predefined tamper scenarios, while the clean condition remains valid. \\
+H2 & The treatment identifies the first broken block and links it to a corresponding lineage event. \\
+H3 & The treatment increases runtime compared with the baseline pipeline, and overhead changes with record count. \\
+H4 & Uncontrolled variables prevent strong true-experimental causal claims. \\
+\bottomrule
+\end{tabular}
+\label{tab:hypotheses}
+\end{table}
+
+\subsection{Variables}
+
+The independent variables include tamper scenario, record count, pipeline stage, security mechanism, and run condition. The dependent variables include verification outcome, detection rate, first-broken-block accuracy, traceability completeness, security overhead, baseline duration, secured duration, and verification duration.
+
+\begin{table}[t]
+\caption{Core Experimental Variables}
+\centering
+\begin{tabular}{p{0.20\linewidth}p{0.26\linewidth}p{0.38\linewidth}}
+\toprule
+\textbf{Variable} & \textbf{Type} & \textbf{Purpose} \\
+\midrule
+Tamper scenario & Categorical IV & Stimulus for detection and traceability. \\
+Record count & Ordinal IV & Scaling factor for overhead. \\
+Pipeline stage & Categorical IV & Context for block and lineage mapping. \\
+Security mechanism & Binary IV & Control versus treatment comparison. \\
+Verification outcome & Categorical DV & Main detection result. \\
+Detection rate & Numeric DV & Ratio of detected tamper scenarios. \\
+Security overhead & Numeric DV & Additional runtime cost of treatment. \\
+\bottomrule
+\end{tabular}
+\label{tab:variables}
+\end{table}
