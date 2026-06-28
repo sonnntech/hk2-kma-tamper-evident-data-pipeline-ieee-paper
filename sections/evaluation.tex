@@ -1,5 +1,11 @@
 \section{Đánh giá thực nghiệm}
 
+\subsection{Tổng quan bằng chứng thực nghiệm}
+
+Kết quả thực nghiệm được tổng hợp từ hai nhóm bằng chứng: verification results cho các clean/tampered runs và experiment metrics cho benchmark overhead. Dashboard export sau RESET\_BASELINE được dùng làm bằng chứng cho điều kiện sạch, trong khi các tamper runs được ghi nhận trong bảng verification\_results. Cách phân tách nguồn bằng chứng này quan trọng vì dashboard sau reset chỉ phản ánh trạng thái sạch cuối cùng, không hiển thị toàn bộ lịch sử tamper runs.
+
+Các KPI quan sát được trong trạng thái sạch gồm 15 pipeline runs, 60 ledger blocks, 56 blocks xác thực thành công và 14 runs có verification results. Không có detected event trong dashboard export sau reset. Điều này hỗ trợ nhận định rằng cơ chế không tạo false positive trong clean condition quan sát được, nhưng không được dùng để chứng minh true positives của các tamper scenarios.
+
 \subsection{Kết quả phát hiện tamper}
 
 Điều kiện sạch tạo ra verification outcome là VALID trong dashboard export được dùng làm bằng chứng cho trạng thái không bị tamper. Các tamper experiments tạo ra outcome non-VALID cho tất cả tamper scenarios được định nghĩa trước. Bảng~\ref{tab:results} tóm tắt các outcome quan sát được. Kết quả hỗ trợ H1 trong phạm vi bounded set của các scenarios đã đánh giá.
@@ -35,6 +41,23 @@ Với sáu true positives và không quan sát thấy false negative trong các 
 
 Verification engine trả về first broken block khi phát hiện mismatch. Block này có thể được join với lineage events thông qua pipeline run identifier. Lineage flow mẫu ghi nhận các transformation Source-to-Bronze, Bronze-to-Silver và Silver-to-Gold, bao gồm input record count, output record count, transformation context và status. Đối với các tamper scenarios được đánh giá, first broken block và lineage context khớp với affected stage ở mức stage tổng quát. Điều này hỗ trợ H2, nhưng vẫn có giới hạn: một số giá trị stage trong source report được ghi nhận ở mức approximate và cần được xác minh bằng SQL export trực tiếp để có kết luận mạnh hơn.
 
+\begin{table}[t]
+\caption{Lineage flow mẫu trong run 10K records}
+\centering
+\begin{tabular}{p{0.34\linewidth}p{0.20\linewidth}p{0.20\linewidth}p{0.14\linewidth}}
+\toprule
+\textbf{Flow} & \textbf{Input} & \textbf{Output} & \textbf{Status} \\
+\midrule
+Source $\rightarrow$ Bronze & 10.000 & 10.000 & SUCCESS \\
+Bronze $\rightarrow$ Silver & 10.000 & 10.000 & SUCCESS \\
+Silver $\rightarrow$ Gold & 10.000 & 1.825 & SUCCESS \\
+\bottomrule
+\end{tabular}
+\label{tab:lineage}
+\end{table}
+
+Traceability không chỉ trả lời câu hỏi ``có lỗi hay không'', mà còn hỗ trợ câu hỏi ``lỗi bắt đầu từ đâu''. Đây là điểm khác biệt giữa hash snapshot đơn lẻ và ledger có liên kết stage. Khi first broken block được gắn với lineage event, người vận hành có thể khoanh vùng transformation bị ảnh hưởng thay vì phải kiểm tra toàn bộ pipeline.
+
 \subsection{Kết quả overhead}
 
 Security overhead được tính theo công thức:
@@ -61,10 +84,46 @@ Các giá trị xấp xỉ từ dashboard cho thấy overhead tăng từ khoản
 \label{tab:overhead}
 \end{table}
 
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[x=1.1cm,y=0.018cm,>=Latex, every node/.style={font=\scriptsize}]
+\draw[->] (0,0) -- (4.5,0) node[right]{Record count};
+\draw[->] (0,0) -- (0,245) node[above]{Overhead};
+\foreach \x/\lab in {1/1K,2/5K,3/10K,4/50K}{\draw (\x,0) -- (\x,-5) node[below]{\lab};}
+\foreach \y in {100,150,200}{\draw (0,\y) -- (-0.05,\y) node[left]{\y\%};}
+\draw[thick] (1,160) -- (2,158) -- (3,180) -- (4,220);
+\foreach \x/\y in {1/160,2/158,3/180,4/220}{\fill (\x,\y) circle (2pt);}
+\end{tikzpicture}
+\caption{Xu hướng overhead xấp xỉ theo record count.}
+\label{fig:overhead}
+\end{figure}
+
 Verification latency dao động xấp xỉ từ 24 giây đến 31 giây trong các runs gần nhất, với một outlier cao hơn. Quan sát này phù hợp với giả định bán thực nghiệm rằng cold start và cloud compute scheduling không thể được kiểm soát hoàn toàn.
+
+\subsection{Kết luận theo giả thuyết}
+
+\begin{table}[t]
+\caption{Kết luận theo giả thuyết}
+\centering
+\begin{tabular}{p{0.13\linewidth}p{0.29\linewidth}p{0.34\linewidth}p{0.13\linewidth}}
+\toprule
+\textbf{H} & \textbf{Metric} & \textbf{Bằng chứng} & \textbf{Kết luận} \\
+\midrule
+H1 & Detection rate & 6 TP, 0 FN, clean VALID & Supported \\
+H2 & First broken block, lineage & Stage và lineage khớp ở mức quan sát & Supported* \\
+H3 & Overhead & Tăng từ $\sim$160\% đến $\sim$220\% & Supported* \\
+H4 & Uncontrolled variables & Cold start, cloud variance, single environment & Confirmed \\
+\bottomrule
+\end{tabular}
+\label{tab:hypothesis_conclusion}
+\end{table}
+
+Dấu * thể hiện kết luận có caveats. Với H2, cần export chính xác first\_broken\_block để tăng sức mạnh bằng chứng. Với H3, cần thêm số lần chạy và raw metrics để phân tích phân phối overhead.
 
 \subsection{Thảo luận}
 
 Bằng chứng thực nghiệm cho thấy Hash-linked Ledger có thể làm cho hành vi tamper sau xử lý trở nên quan sát được trong pipeline nhiều stage. Cơ chế này đặc biệt hữu ích khi mục tiêu không phải là ngăn chặn trực tiếp privileged writes, mà là phát hiện modification trái phép trong quá trình verification về sau. Điều này phù hợp với thiết kế tamper-evident, không phải tamper-proof.
 
 Kết quả cũng làm rõ vai trò của thuật ngữ Blockchain. Nguyên mẫu sử dụng hash chain lấy cảm hứng từ Blockchain, nhưng không triển khai distributed consensus, replicated nodes, mining, proof-of-work, proof-of-stake hoặc smart contracts. Vì vậy, thuật ngữ chính xác hơn là Hash-linked Tamper-evident Ledger. Sự phân biệt này quan trọng đối với construct validity và giúp tránh overclaiming.
+
+Cuối cùng, overhead quan sát được cho thấy cơ chế hiện tại phù hợp với mục tiêu demo và nghiên cứu thực nghiệm nhỏ, nhưng chưa tối ưu cho production quy mô lớn. Các hướng tối ưu có thể bao gồm partition-level hashing, Merkle tree, incremental verification và external checkpoint để giảm chi phí kiểm chứng toàn bộ dataset.
