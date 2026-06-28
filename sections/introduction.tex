@@ -1,28 +1,28 @@
-\section{Introduction}
+\section{Giới thiệu}
 
-Data pipelines have become critical components of analytical and operational information systems. A typical pipeline receives source data, transforms it through intermediate layers, persists curated outputs, and exposes them to reporting or downstream applications. In many lakehouse and warehouse architectures, this lifecycle is represented by stages such as \pipeline. While these stages improve data organization and observability, they do not automatically guarantee that data remains unchanged after the pipeline has finished.
+Data Pipeline đã trở thành thành phần quan trọng trong các hệ thống thông tin phục vụ vận hành và phân tích dữ liệu. Một pipeline điển hình tiếp nhận dữ liệu nguồn, xử lý qua các tầng trung gian, lưu trữ kết quả đã chuẩn hóa và cung cấp dữ liệu cho báo cáo hoặc ứng dụng hạ nguồn. Trong nhiều kiến trúc lakehouse hoặc warehouse, vòng đời này thường được biểu diễn qua các stage như \pipeline. Tuy các stage này giúp tổ chức dữ liệu rõ ràng hơn, chúng không tự động bảo đảm rằng dữ liệu sẽ không bị thay đổi sau khi pipeline đã hoàn tất.
 
-This problem is a cybersecurity and information assurance concern. If a privileged user, compromised credential, or insider modifies data after execution, the pipeline may still appear successful in the orchestration tool. Conventional monitoring can confirm that a job ran, but it may not independently verify whether the stored data has been altered later. Audit logs and database logs can help, but they usually remain inside the same administrative trust boundary as the protected data. Application-level checksums can detect simple mismatches, yet they are often not chained across pipeline stages and may not provide a clear trace to the affected transformation.
+Đây là vấn đề thuộc phạm vi an toàn thông tin và bảo đảm thông tin. Nếu người dùng có quyền cao, tài khoản bị xâm nhập hoặc insider chỉnh sửa dữ liệu sau khi pipeline chạy xong, công cụ orchestration vẫn có thể hiển thị trạng thái thành công. Cơ chế giám sát thông thường có thể xác nhận rằng job đã chạy, nhưng không nhất thiết kiểm chứng độc lập rằng dữ liệu lưu trữ sau đó vẫn còn nguyên vẹn. Database audit log có thể hỗ trợ điều tra, nhưng thường nằm trong cùng ranh giới quản trị với dữ liệu được bảo vệ. Checksum ở tầng ứng dụng có thể phát hiện sai lệch đơn giản, nhưng nếu không được liên kết theo chuỗi giữa các stage thì khó cung cấp bằng chứng truy vết rõ ràng đến transformation bị ảnh hưởng.
 
-This paper investigates a lightweight alternative: a hash-linked tamper-evident ledger. A tamper-evident mechanism does not prevent modification. Instead, it provides evidence that a modification has occurred. A hash-linked ledger stores evidence records in sequence, where each block includes a hash of the previous block. If a block payload or prior link is changed, later verification can detect that the chain no longer matches.
+Bài báo này nghiên cứu một hướng tiếp cận nhẹ hơn: \hashledger{}. Cơ chế tamper-evident không ngăn chặn trực tiếp việc chỉnh sửa dữ liệu. Thay vào đó, nó tạo ra bằng chứng để phát hiện rằng việc chỉnh sửa đã xảy ra. Hash-linked Ledger lưu các bản ghi bằng chứng theo thứ tự, trong đó mỗi block chứa hash của block trước đó. Nếu payload của block hoặc liên kết previous hash bị thay đổi, quá trình verification về sau có thể phát hiện chuỗi không còn khớp.
 
-\subsection{Research Gap}
+\subsection{Khoảng trống nghiên cứu}
 
-Several existing mechanisms address parts of the data integrity problem. Database audit logs record operations, but administrators with sufficient privileges may alter both data and logs. Application-level checksums can validate a dataset snapshot, but they are commonly isolated and do not preserve stage-to-stage linkage. Full decentralized blockchains provide stronger immutability properties through consensus and replicated nodes, but their operational overhead and architectural complexity are often unnecessary for an internal data pipeline integrity experiment. Pipeline monitoring observes execution status, but it does not necessarily provide post-execution integrity evidence.
+Một số cơ chế hiện có đã giải quyết từng phần của bài toán toàn vẹn dữ liệu. Database audit log ghi lại thao tác, nhưng administrator có quyền cao có thể tác động đến cả dữ liệu và log. Checksum ở tầng ứng dụng có thể xác thực một snapshot dữ liệu, nhưng thường bị cô lập và không bảo toàn quan hệ stage-to-stage. Blockchain phi tập trung đầy đủ có thể cung cấp đặc tính bất biến mạnh hơn thông qua consensus và nhiều node sao chép, nhưng overhead vận hành và độ phức tạp kiến trúc thường vượt quá nhu cầu của một bài toán kiểm chứng integrity nội bộ trong Data Pipeline. Pipeline monitoring quan sát trạng thái thực thi, nhưng không nhất thiết cung cấp bằng chứng kiểm chứng sau khi pipeline đã hoàn tất.
 
-The gap addressed in this paper is the lack of a controlled evaluation of a lightweight hash-linked ledger for multi-stage data pipeline integrity verification. The study focuses on whether such a mechanism can detect predefined tamper scenarios, identify the first broken block and related lineage context, and quantify the additional runtime overhead under a constrained experimental environment.
+Khoảng trống mà bài báo này tập trung là thiếu một đánh giá có kiểm soát về cơ chế Hash-linked Ledger nhẹ cho kiểm chứng tính toàn vẹn của Data Pipeline nhiều stage. Nghiên cứu xem xét liệu cơ chế này có phát hiện được các tamper scenarios được định nghĩa trước hay không, có xác định được first broken block và lineage context liên quan hay không, và overhead bổ sung thay đổi như thế nào trong một môi trường thực nghiệm bị ràng buộc.
 
-\subsection{Research Questions}
+\subsection{Câu hỏi nghiên cứu}
 
-The study is guided by four research questions:
+Nghiên cứu được dẫn dắt bởi bốn câu hỏi nghiên cứu:
 
 \begin{itemize}
-    \item \textbf{RQ1:} Can a hash-linked ledger and verification engine detect unauthorized changes to pipeline data, ledger payloads, and chain links?
-    \item \textbf{RQ2:} Can the mechanism identify the first broken block, affected stage, and related lineage event?
-    \item \textbf{RQ3:} What additional runtime overhead does the mechanism introduce as record count changes?
-    \item \textbf{RQ4:} Which uncontrolled variables in the experimental environment limit the strength of the conclusions?
+    \item \textbf{RQ1:} Hash-linked Ledger và verification engine có phát hiện được thay đổi trái phép đối với dữ liệu pipeline, ledger payload và chain link hay không?
+    \item \textbf{RQ2:} Cơ chế này có xác định được first broken block, stage bị ảnh hưởng và lineage event liên quan hay không?
+    \item \textbf{RQ3:} Cơ chế này tạo thêm overhead thời gian xử lý như thế nào khi record count thay đổi?
+    \item \textbf{RQ4:} Những biến không kiểm soát được trong môi trường thực nghiệm giới hạn sức mạnh kết luận ra sao?
 \end{itemize}
 
-\subsection{Contributions}
+\subsection{Đóng góp}
 
-This work makes three contributions. First, it defines a bounded tamper-evident mechanism for data pipeline integrity verification using stage-level batch hashes, block hashes, previous-hash links, and lineage events. Second, it designs a quasi-experimental evaluation with clean, tampered, and benchmark conditions. Third, it reports empirical observations and validity limitations instead of claiming general blockchain-level immutability or strong causal proof.
+Bài báo có ba đóng góp chính. Thứ nhất, nghiên cứu định nghĩa một cơ chế tamper-evident có phạm vi rõ ràng cho kiểm chứng integrity của Data Pipeline bằng batch hash, block hash, previous-hash link và lineage event ở từng stage. Thứ hai, nghiên cứu thiết kế một đánh giá bán thực nghiệm với điều kiện sạch, điều kiện bị tamper và điều kiện benchmark. Thứ ba, nghiên cứu báo cáo quan sát thực nghiệm cùng các giới hạn validity, thay vì tuyên bố quá mức rằng cơ chế này đạt tính bất biến như Blockchain đầy đủ hoặc đưa ra kết luận nhân quả mạnh.
