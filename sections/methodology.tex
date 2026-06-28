@@ -1,28 +1,28 @@
-\section{Methodology}
+\section{Phương pháp nghiên cứu}
 
-\subsection{Justification for Quasi-Experimental Design}
+\subsection{Biện minh lựa chọn thiết kế bán thực nghiệm}
 
-This study follows a quasi-experimental methodology because the intervention can be implemented and measured, but the environment cannot be fully controlled. A true experiment would require random assignment, controlled compute resources, stable network conditions, repeated execution under identical resource states, and a representative population of real attackers. These assumptions are not realistic in the selected Databricks-based environment.
+Nghiên cứu này sử dụng phương pháp bán thực nghiệm (quasi-experimental) vì can thiệp kỹ thuật có thể được triển khai và đo lường, nhưng môi trường thực nghiệm không thể được kiểm soát hoàn toàn. Một true experiment đòi hỏi random assignment, tài nguyên tính toán cố định, điều kiện mạng ổn định, các lần chạy lặp lại trong trạng thái tài nguyên giống hệt nhau và tập đối tượng tấn công đại diện cho thực tế. Những giả định này không khả thi trong môi trường Databricks được sử dụng trong nghiên cứu.
 
-The experiment controls what can be controlled: the pipeline structure, synthetic data generation seed, predefined tamper scenarios, verification logic, measured variables, and run procedure. The experiment documents what cannot be controlled: cloud scheduling, warm-up behavior, cache state, network latency, and the fact that tamper scenarios are researcher-defined proxies rather than a random sample of real-world attacks. Therefore, the study reports quasi-experimental evidence of association between the treatment and observed integrity outcomes, not a universal causal claim.
+Thực nghiệm kiểm soát các yếu tố có thể kiểm soát được: cấu trúc pipeline, seed sinh dữ liệu synthetic, danh sách tamper scenarios, logic verification, tập biến đo lường và thứ tự procedure. Đồng thời, nghiên cứu ghi nhận các yếu tố không thể kiểm soát: cloud scheduling, trạng thái warm-up, cache, network latency và việc tamper scenarios là proxy do researcher thiết kế, không phải mẫu ngẫu nhiên của attack space thực tế. Vì vậy, kết quả được diễn giải là bằng chứng bán thực nghiệm về quan hệ giữa treatment và outcome quan sát được, không phải kết luận nhân quả phổ quát.
 
-\subsection{Treatment and Control Conditions}
+\subsection{Treatment và Control}
 
-The treatment is the addition of a hash-linked tamper-evident ledger, lineage recorder, and verification engine to a standard data pipeline. The control condition depends on the research question. For detection and traceability, the clean pipeline state with no tamper scenario acts as the pre-test control. For overhead measurement, the baseline pipeline without ledger and verification instrumentation acts as the non-equivalent control.
+Treatment là việc bổ sung Hash-linked Tamper-evident Ledger, lineage recorder và verification engine vào một Data Pipeline chuẩn. Control condition phụ thuộc vào câu hỏi nghiên cứu. Đối với detection và traceability, trạng thái pipeline sạch, không có tamper scenario, đóng vai trò pre-test control. Đối với overhead, pipeline baseline không có ledger và verification instrumentation đóng vai trò non-equivalent control.
 
 \begin{figure}[t]
 \centering
-\begin{tikzpicture}[node distance=0.75cm,>=Latex, every node/.style={font=\scriptsize}]
-\tikzstyle{stage}=[draw, rounded corners, minimum width=1.55cm, minimum height=0.45cm, align=center]
-\tikzstyle{ledger}=[draw, dashed, rounded corners, minimum width=1.75cm, minimum height=0.45cm, align=center]
+\begin{tikzpicture}[node distance=0.65cm,>=Latex, every node/.style={font=\scriptsize}]
+\tikzstyle{stage}=[draw, rounded corners, minimum width=1.35cm, minimum height=0.43cm, align=center]
+\tikzstyle{ledger}=[draw, dashed, rounded corners, minimum width=1.55cm, minimum height=0.43cm, align=center]
 \node[stage] (src) {Source};
 \node[stage, right=of src] (brz) {Bronze};
 \node[stage, right=of brz] (slv) {Silver};
 \node[stage, right=of slv] (gld) {Gold};
-\node[ledger, below=0.65cm of src] (b1) {Block 1};
-\node[ledger, below=0.65cm of brz] (b2) {Block 2};
-\node[ledger, below=0.65cm of slv] (b3) {Block 3};
-\node[ledger, below=0.65cm of gld] (b4) {Block 4};
+\node[ledger, below=0.62cm of src] (b1) {Block 1};
+\node[ledger, below=0.62cm of brz] (b2) {Block 2};
+\node[ledger, below=0.62cm of slv] (b3) {Block 3};
+\node[ledger, below=0.62cm of gld] (b4) {Block 4};
 \draw[->] (src) -- (brz);
 \draw[->] (brz) -- (slv);
 \draw[->] (slv) -- (gld);
@@ -30,50 +30,50 @@ The treatment is the addition of a hash-linked tamper-evident ledger, lineage re
 \draw[->] (brz) -- (b2);
 \draw[->] (slv) -- (b3);
 \draw[->] (gld) -- (b4);
-\draw[->, dashed] (b1) -- node[above]{prev hash} (b2);
-\draw[->, dashed] (b2) -- node[above]{prev hash} (b3);
-\draw[->, dashed] (b3) -- node[above]{prev hash} (b4);
+\draw[->, dashed] (b1) -- node[above]{prev} (b2);
+\draw[->, dashed] (b2) -- node[above]{prev} (b3);
+\draw[->, dashed] (b3) -- node[above]{prev} (b4);
 \end{tikzpicture}
-\caption{Hash-linked tamper-evident ledger for a multi-stage data pipeline.}
+\caption{Hash-linked Tamper-evident Ledger cho Data Pipeline nhiều stage.}
 \label{fig:architecture}
 \end{figure}
 
-\subsection{Hypotheses}
+\subsection{Giả thuyết nghiên cứu}
 
 \begin{table}[t]
-\caption{Research Hypotheses}
+\caption{Giả thuyết nghiên cứu}
 \centering
 \begin{tabular}{p{0.12\linewidth}p{0.75\linewidth}}
 \toprule
-\textbf{ID} & \textbf{Hypothesis} \\
+\textbf{Mã} & \textbf{Giả thuyết} \\
 \midrule
-H1 & The treatment detects all predefined tamper scenarios, while the clean condition remains valid. \\
-H2 & The treatment identifies the first broken block and links it to a corresponding lineage event. \\
-H3 & The treatment increases runtime compared with the baseline pipeline, and overhead changes with record count. \\
-H4 & Uncontrolled variables prevent strong true-experimental causal claims. \\
+H1 & Treatment phát hiện tất cả tamper scenarios được định nghĩa trước, trong khi điều kiện sạch vẫn hợp lệ. \\
+H2 & Treatment xác định được first broken block và liên kết được với lineage event tương ứng. \\
+H3 & Treatment làm tăng thời gian xử lý so với pipeline baseline, và overhead thay đổi theo record count. \\
+H4 & Các biến không kiểm soát được khiến nghiên cứu không thể đưa ra kết luận nhân quả mạnh như true experiment. \\
 \bottomrule
 \end{tabular}
 \label{tab:hypotheses}
 \end{table}
 
-\subsection{Variables}
+\subsection{Biến nghiên cứu}
 
-The independent variables include tamper scenario, record count, pipeline stage, security mechanism, and run condition. The dependent variables include verification outcome, detection rate, first-broken-block accuracy, traceability completeness, security overhead, baseline duration, secured duration, and verification duration.
+Các biến độc lập gồm tamper scenario, record count, pipeline stage, security mechanism và run condition. Các biến phụ thuộc gồm verification outcome, detection rate, first-broken-block accuracy, traceability completeness, security overhead, baseline duration, secured duration và verification duration.
 
 \begin{table}[t]
-\caption{Core Experimental Variables}
+\caption{Các biến thực nghiệm cốt lõi}
 \centering
-\begin{tabular}{p{0.20\linewidth}p{0.26\linewidth}p{0.38\linewidth}}
+\begin{tabular}{p{0.22\linewidth}p{0.24\linewidth}p{0.38\linewidth}}
 \toprule
-\textbf{Variable} & \textbf{Type} & \textbf{Purpose} \\
+\textbf{Biến} & \textbf{Loại} & \textbf{Vai trò} \\
 \midrule
-Tamper scenario & Categorical IV & Stimulus for detection and traceability. \\
-Record count & Ordinal IV & Scaling factor for overhead. \\
-Pipeline stage & Categorical IV & Context for block and lineage mapping. \\
-Security mechanism & Binary IV & Control versus treatment comparison. \\
-Verification outcome & Categorical DV & Main detection result. \\
-Detection rate & Numeric DV & Ratio of detected tamper scenarios. \\
-Security overhead & Numeric DV & Additional runtime cost of treatment. \\
+Tamper scenario & IV phân loại & Tác nhân kiểm thử detection và traceability. \\
+Record count & IV thứ bậc & Yếu tố đánh giá scaling của overhead. \\
+Pipeline stage & IV phân loại & Ngữ cảnh cho block và lineage mapping. \\
+Security mechanism & IV nhị phân & So sánh control và treatment. \\
+Verification outcome & DV phân loại & Kết quả phát hiện chính. \\
+Detection rate & DV số & Tỷ lệ tamper scenarios được phát hiện. \\
+Security overhead & DV số & Chi phí thời gian bổ sung của treatment. \\
 \bottomrule
 \end{tabular}
 \label{tab:variables}
