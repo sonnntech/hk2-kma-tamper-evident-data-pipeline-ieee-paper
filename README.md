@@ -1,22 +1,22 @@
 # HK2 KMA Tamper-evident Data Pipeline IEEE Paper
 
-This repository contains an IEEE-style conference paper for the research topic:
+Repository này chứa bản thảo bài báo theo định dạng IEEE Conference cho đề tài:
 
-**Quasi-Experimental Evaluation of a Hash-linked Tamper-evident Ledger for Data Pipeline Integrity Verification**
+**Đánh giá bán thực nghiệm cơ chế Hash-linked Tamper-evident Ledger nhằm kiểm chứng tính toàn vẹn dữ liệu trong hệ thống Data Pipeline**
 
-## Purpose
+## Mục tiêu
 
-The paper is written to satisfy a course requirement that the report should simulate a real conference submission in IEEE two-column format, 6--8 pages, following the research lifecycle:
+Bài báo được viết để đáp ứng yêu cầu môn học: báo cáo cần mô phỏng một bài báo nộp hội thảo theo chuẩn IEEE hai cột, độ dài 6--8 trang, phản ánh vòng đời nghiên cứu gồm 7 bước:
 
-1. Research problem
-2. Literature/background and research gap
-3. Research questions
-4. Methodology and justification
-5. Experimental design
-6. Experimental evaluation
-7. Conclusion
+1. Vấn đề nghiên cứu
+2. Tổng quan/GAP nghiên cứu
+3. Câu hỏi nghiên cứu
+4. Phương pháp luận và biện minh lựa chọn phương pháp
+5. Thiết kế thực nghiệm
+6. Đánh giá thực nghiệm
+7. Kết luận
 
-## Repository Structure
+## Cấu trúc repository
 
 ```text
 .
@@ -35,28 +35,30 @@ The paper is written to satisfy a course requirement that the report should simu
 └── .github/workflows/build-latex.yml
 ```
 
-## Build Locally
+## Build local
 
-Install a LaTeX distribution such as TeX Live, then run:
+Cài đặt TeX Live hoặc một LaTeX distribution tương đương, sau đó chạy:
 
 ```bash
 make
 ```
 
-The output PDF will be generated as:
+File PDF output sẽ được tạo tại:
 
 ```text
 build/main.pdf
 ```
 
-## Build on Overleaf
+## Build trên Overleaf
 
-Upload all files to Overleaf and set `main.tex` as the main document. The project uses:
+Upload toàn bộ file lên Overleaf và chọn `main.tex` làm main document. Do bài viết dùng tiếng Việt, hãy chọn compiler là **XeLaTeX**.
+
+Project sử dụng:
 
 ```latex
 \documentclass[conference]{IEEEtran}
 ```
 
-## Notes
+## Ghi chú thuật ngữ
 
-This paper intentionally uses the term **Hash-linked Tamper-evident Ledger** instead of claiming a full blockchain system. The implemented mechanism focuses on data integrity verification and tamper detection, not decentralized consensus, smart contracts, mining, or public-chain deployment.
+Bài báo cố ý sử dụng thuật ngữ **Hash-linked Tamper-evident Ledger** thay vì tuyên bố đây là một hệ thống Blockchain đầy đủ. Cơ chế được triển khai tập trung vào kiểm chứng tính toàn vẹn dữ liệu và phát hiện sửa đổi trái phép, không bao gồm decentralized consensus, smart contracts, mining hoặc public-chain deployment.
