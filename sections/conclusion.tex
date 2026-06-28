@@ -1,0 +1,9 @@
+\section{Conclusion and Future Work}
+
+This paper presented a quasi-experimental evaluation of a hash-linked tamper-evident ledger for data pipeline integrity verification. The mechanism records stage-level integrity evidence and links ledger blocks through previous hashes. A verification engine recomputes record counts, schema hashes, batch hashes, block hashes, and chain links to detect post-execution modification.
+
+The experimental observations support the main hypotheses within a bounded scope. All predefined tamper scenarios were detected, the clean condition remained valid in the observed dashboard export, and lineage context helped identify the affected stage. Runtime overhead increased as record count grew, but the overhead measurement remains approximate and affected by cloud compute variability.
+
+The study should be interpreted as evidence for a lightweight tamper-evident mechanism, not as proof of full blockchain security. The prototype does not include decentralized consensus, multiple independent nodes, smart contracts, or external trust anchoring. Therefore, its security boundary is limited to the controlled workspace setting.
+
+Future work should replicate the experiment on multiple data platforms, expand the tamper vector set through adversarial testing, increase benchmark repetitions, export raw benchmark values, externalize the ledger to a separate trust boundary, and add digital signatures for stronger evidence against privileged insider modification.
