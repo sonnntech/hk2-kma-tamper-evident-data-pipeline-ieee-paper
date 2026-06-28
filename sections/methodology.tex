@@ -2,9 +2,13 @@
 
 \subsection{Biện minh lựa chọn thiết kế bán thực nghiệm}
 
-Nghiên cứu này sử dụng phương pháp bán thực nghiệm (quasi-experimental) vì can thiệp kỹ thuật có thể được triển khai và đo lường, nhưng môi trường thực nghiệm không thể được kiểm soát hoàn toàn. Một true experiment đòi hỏi random assignment, tài nguyên tính toán cố định, điều kiện mạng ổn định, các lần chạy lặp lại trong trạng thái tài nguyên giống hệt nhau và tập đối tượng tấn công đại diện cho thực tế. Những giả định này không khả thi trong môi trường Databricks được sử dụng trong nghiên cứu.
+Nghiên cứu này sử dụng phương pháp bán thực nghiệm (quasi-experimental) vì can thiệp kỹ thuật có thể được triển khai và đo lường, nhưng môi trường thực nghiệm không thể được kiểm soát hoàn toàn. Theo cách tiếp cận trong nghiên cứu an toàn thông tin, nhiều hệ thống cyber không thể được đặt vào điều kiện true experiment tuyệt đối do sự đa dạng của môi trường, hạn chế về đối tượng tấn công thực, ảnh hưởng của hạ tầng cloud và các biến nền khó kiểm soát \cite{edgar2017research}. Một true experiment đòi hỏi random assignment, tài nguyên tính toán cố định, điều kiện mạng ổn định, các lần chạy lặp lại trong trạng thái tài nguyên giống hệt nhau và tập đối tượng tấn công đại diện cho thực tế. Những giả định này không khả thi trong môi trường Databricks được sử dụng trong nghiên cứu.
 
 Thực nghiệm kiểm soát các yếu tố có thể kiểm soát được: cấu trúc pipeline, seed sinh dữ liệu synthetic, danh sách tamper scenarios, logic verification, tập biến đo lường và thứ tự procedure. Đồng thời, nghiên cứu ghi nhận các yếu tố không thể kiểm soát: cloud scheduling, trạng thái warm-up, cache, network latency và việc tamper scenarios là proxy do researcher thiết kế, không phải mẫu ngẫu nhiên của attack space thực tế. Vì vậy, kết quả được diễn giải là bằng chứng bán thực nghiệm về quan hệ giữa treatment và outcome quan sát được, không phải kết luận nhân quả phổ quát.
+
+\subsection{Mô hình nghiên cứu}
+
+Mô hình nghiên cứu gồm bốn thành phần: pipeline xử lý dữ liệu, ledger ghi nhận bằng chứng, verification engine và metrics table. Pipeline tạo dữ liệu ở các stage. Ledger ghi nhận evidence tại mỗi stage. Verification engine tính lại evidence và so sánh với ledger. Metrics table ghi lại runtime, verification latency, overhead và outcome để phân tích. Cách tổ chức này giúp tách bạch giữa hệ thống được đánh giá và dữ liệu đo lường.
 
 \subsection{Treatment và Control}
 
@@ -56,7 +60,7 @@ H4 & Các biến không kiểm soát được khiến nghiên cứu không thể
 \label{tab:hypotheses}
 \end{table}
 
-\subsection{Biến nghiên cứu}
+\subsection{Biến nghiên cứu và metrics}
 
 Các biến độc lập gồm tamper scenario, record count, pipeline stage, security mechanism và run condition. Các biến phụ thuộc gồm verification outcome, detection rate, first-broken-block accuracy, traceability completeness, security overhead, baseline duration, secured duration và verification duration.
 
@@ -78,3 +82,5 @@ Security overhead & DV số & Chi phí thời gian bổ sung của treatment. \\
 \end{tabular}
 \label{tab:variables}
 \end{table}
+
+Các metrics chính được tính như sau: detection rate được tính bằng $TP/(TP+FN)$; false positive được xác định khi scenario NONE trả về non-VALID; false negative được xác định khi scenario có tamper trả về VALID; overhead được tính bằng $(secured-baseline)/baseline$. Các metrics này liên kết trực tiếp với RQ1, RQ2 và RQ3, còn RQ4 được trả lời thông qua phân tích validity và uncontrolled variables.
