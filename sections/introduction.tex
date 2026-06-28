@@ -1,0 +1,28 @@
+\section{Introduction}
+
+Data pipelines have become critical components of analytical and operational information systems. A typical pipeline receives source data, transforms it through intermediate layers, persists curated outputs, and exposes them to reporting or downstream applications. In many lakehouse and warehouse architectures, this lifecycle is represented by stages such as \pipeline. While these stages improve data organization and observability, they do not automatically guarantee that data remains unchanged after the pipeline has finished.
+
+This problem is a cybersecurity and information assurance concern. If a privileged user, compromised credential, or insider modifies data after execution, the pipeline may still appear successful in the orchestration tool. Conventional monitoring can confirm that a job ran, but it may not independently verify whether the stored data has been altered later. Audit logs and database logs can help, but they usually remain inside the same administrative trust boundary as the protected data. Application-level checksums can detect simple mismatches, yet they are often not chained across pipeline stages and may not provide a clear trace to the affected transformation.
+
+This paper investigates a lightweight alternative: a hash-linked tamper-evident ledger. A tamper-evident mechanism does not prevent modification. Instead, it provides evidence that a modification has occurred. A hash-linked ledger stores evidence records in sequence, where each block includes a hash of the previous block. If a block payload or prior link is changed, later verification can detect that the chain no longer matches.
+
+\subsection{Research Gap}
+
+Several existing mechanisms address parts of the data integrity problem. Database audit logs record operations, but administrators with sufficient privileges may alter both data and logs. Application-level checksums can validate a dataset snapshot, but they are commonly isolated and do not preserve stage-to-stage linkage. Full decentralized blockchains provide stronger immutability properties through consensus and replicated nodes, but their operational overhead and architectural complexity are often unnecessary for an internal data pipeline integrity experiment. Pipeline monitoring observes execution status, but it does not necessarily provide post-execution integrity evidence.
+
+The gap addressed in this paper is the lack of a controlled evaluation of a lightweight hash-linked ledger for multi-stage data pipeline integrity verification. The study focuses on whether such a mechanism can detect predefined tamper scenarios, identify the first broken block and related lineage context, and quantify the additional runtime overhead under a constrained experimental environment.
+
+\subsection{Research Questions}
+
+The study is guided by four research questions:
+
+\begin{itemize}
+    \item \textbf{RQ1:} Can a hash-linked ledger and verification engine detect unauthorized changes to pipeline data, ledger payloads, and chain links?
+    \item \textbf{RQ2:} Can the mechanism identify the first broken block, affected stage, and related lineage event?
+    \item \textbf{RQ3:} What additional runtime overhead does the mechanism introduce as record count changes?
+    \item \textbf{RQ4:} Which uncontrolled variables in the experimental environment limit the strength of the conclusions?
+\end{itemize}
+
+\subsection{Contributions}
+
+This work makes three contributions. First, it defines a bounded tamper-evident mechanism for data pipeline integrity verification using stage-level batch hashes, block hashes, previous-hash links, and lineage events. Second, it designs a quasi-experimental evaluation with clean, tampered, and benchmark conditions. Third, it reports empirical observations and validity limitations instead of claiming general blockchain-level immutability or strong causal proof.
