@@ -1,0 +1,70 @@
+\section{Experimental Evaluation}
+
+\subsection{Detection Results}
+
+The clean condition produced VALID verification outcomes in the dashboard export used as evidence for the non-tampered state. The tamper experiments produced non-VALID outcomes for all predefined tamper scenarios. Table~\ref{tab:results} summarizes the observed outcomes. The result supports H1 within the bounded set of evaluated scenarios.
+
+\begin{table}[t]
+\caption{Observed Verification Results}
+\centering
+\begin{tabular}{p{0.42\linewidth}p{0.31\linewidth}p{0.12\linewidth}}
+\toprule
+\textbf{Scenario} & \textbf{Observed Outcome} & \textbf{Class} \\
+\midrule
+NONE & VALID & TN \\
+MODIFY\_TRANSACTION\_AMOUNT & DATA\_TAMPERED & TP \\
+DELETE\_TRANSACTION & RECORD\_COUNT\_MISMATCH & TP \\
+INSERT\_FAKE\_TRANSACTION & RECORD\_COUNT\_MISMATCH & TP \\
+MODIFY\_LEDGER\_BATCH\_HASH & DATA\_TAMPERED & TP \\
+MODIFY\_LEDGER\_TRANSFORMATION & BLOCK\_TAMPERED & TP \\
+MODIFY\_LEDGER\_PREVIOUS\_HASH & CHAIN\_BROKEN & TP \\
+\bottomrule
+\end{tabular}
+\label{tab:results}
+\end{table}
+
+The observed detection rate is calculated as:
+
+\begin{equation}
+Detection\ Rate = \frac{TP}{TP + FN} \times 100\%.
+\end{equation}
+
+With six true positives and no observed false negative in the tampered scenarios, the detection rate is 100\% within the predefined test set. This result must not be interpreted as universal attack coverage. It only means that the mechanism detected the six tamper vectors selected for this experiment.
+
+\subsection{Traceability Results}
+
+The verification engine reports a first broken block when a mismatch is found. This block can be joined with lineage events using the pipeline run identifier. The sample lineage flow records Source-to-Bronze, Bronze-to-Silver, and Silver-to-Gold transformations, including input record count, output record count, transformation context, and status. For the evaluated tamper scenarios, the recorded first broken block and lineage context matched the affected stage at a coarse stage level. This supports H2, with the limitation that some stage values were recorded as approximate in the source report and should be verified by direct SQL export for a stronger claim.
+
+\subsection{Overhead Results}
+
+Security overhead is computed as:
+
+\begin{equation}
+Overhead = \frac{SecuredDuration - BaselineDuration}{BaselineDuration} \times 100\%.
+\end{equation}
+
+The approximate dashboard values show overhead increasing from about 160\% at 1K records to about 220\% at 50K records. Table~\ref{tab:overhead} summarizes the observed trend. The 5K case is close to the 1K case, which suggests the influence of cloud runtime variance. Overall, the evidence supports H3 with caveats.
+
+\begin{table}[t]
+\caption{Approximate Runtime Overhead by Record Count}
+\centering
+\begin{tabular}{p{0.30\linewidth}p{0.33\linewidth}p{0.22\linewidth}}
+\toprule
+\textbf{Record Count} & \textbf{Approx. Overhead} & \textbf{Evidence Type} \\
+\midrule
+1K & $\sim$160\% & Dashboard \\
+5K & $\sim$155--160\% & Dashboard \\
+10K & $\sim$180\% & Dashboard \\
+50K & $\sim$220\% & Dashboard \\
+\bottomrule
+\end{tabular}
+\label{tab:overhead}
+\end{table}
+
+Verification latency ranged from approximately 24 seconds to 31 seconds in recent runs, with one higher outlier. This observation is consistent with the quasi-experimental assumption that cold start and cloud compute scheduling cannot be fully controlled.
+
+\subsection{Discussion}
+
+The experimental evidence indicates that a hash-linked ledger can make post-execution tampering visible in a multi-stage pipeline. The mechanism is especially useful when the objective is not to prevent privileged writes directly, but to make unauthorized modification detectable during later verification. This aligns with tamper-evident design rather than tamper-proof design.
+
+The result also clarifies the role of the word blockchain. The prototype uses a blockchain-inspired hash chain, but it does not implement distributed consensus, replicated nodes, mining, proof-of-work, proof-of-stake, or smart contracts. Therefore, the more precise term is hash-linked tamper-evident ledger. This distinction is important for construct validity and prevents overclaiming.
