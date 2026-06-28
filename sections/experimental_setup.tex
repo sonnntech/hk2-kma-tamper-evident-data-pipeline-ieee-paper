@@ -1,0 +1,62 @@
+\section{Experimental Design and Setup}
+
+\subsection{Pipeline Prototype}
+
+The prototype implements a four-stage analytical pipeline: Source, Bronze, Silver, and Gold. Source data is generated synthetically using a fixed random seed to support reproducibility. Bronze stores ingested records, Silver applies normalization and transformation logic, and Gold stores aggregated outputs. Each stage emits evidence into the ledger.
+
+For each stage, the ledger records a stage name, record count, schema hash, batch hash, block hash, previous block hash, transformation metadata, timestamp, and pipeline run identifier. The batch hash represents the canonicalized content of the stage output. The schema hash represents the structure of the stage output. The block hash represents the cryptographic digest of the block payload. The previous hash links the current block to the previous block in the same pipeline run.
+
+The verification engine recomputes stage evidence and compares it against the stored ledger. A mismatch in content hash indicates data tampering. A mismatch in record count indicates insertion or deletion. A mismatch in block payload indicates ledger tampering. A mismatch in previous hash indicates a broken chain link.
+
+\subsection{Tamper Scenarios}
+
+The study evaluates six tamper scenarios and one clean scenario. The clean scenario, labeled NONE, is used to observe false positives. The tamper scenarios modify transaction values, delete records, insert fake records, modify stored batch hashes, modify transformation metadata, and modify previous-hash links.
+
+\begin{table}[t]
+\caption{Tamper Scenarios and Expected Outcomes}
+\centering
+\begin{tabular}{p{0.45\linewidth}p{0.39\linewidth}}
+\toprule
+\textbf{Scenario} & \textbf{Expected Verification Outcome} \\
+\midrule
+NONE & VALID \\
+MODIFY\_TRANSACTION\_AMOUNT & DATA\_TAMPERED \\
+DELETE\_TRANSACTION & RECORD\_COUNT\_MISMATCH \\
+INSERT\_FAKE\_TRANSACTION & RECORD\_COUNT\_MISMATCH \\
+MODIFY\_LEDGER\_BATCH\_HASH & DATA\_TAMPERED \\
+MODIFY\_LEDGER\_TRANSFORMATION & BLOCK\_TAMPERED \\
+MODIFY\_LEDGER\_PREVIOUS\_HASH & CHAIN\_BROKEN \\
+\bottomrule
+\end{tabular}
+\label{tab:scenarios}
+\end{table}
+
+\subsection{Procedure}
+
+The experiment follows the procedure shown in Fig.~\ref{fig:procedure}. First, the environment and Delta tables are initialized. Second, synthetic source data is generated using a fixed seed. Third, the baseline and treatment pipeline executions are performed. Fourth, the verification engine validates the clean run. Fifth, a tamper scenario is applied. Sixth, verification is repeated to measure detection and traceability. Seventh, the baseline state is reset before the next scenario. Finally, benchmark runs are executed for multiple record counts.
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[node distance=0.35cm,>=Latex, every node/.style={font=\scriptsize}]
+\tikzstyle{step}=[draw, rounded corners, text width=6.2cm, align=center, minimum height=0.42cm]
+\node[step] (s1) {Setup environment and tables};
+\node[step, below=of s1] (s2) {Generate synthetic source data};
+\node[step, below=of s2] (s3) {Run baseline and treatment pipeline};
+\node[step, below=of s3] (s4) {Verify clean condition};
+\node[step, below=of s4] (s5) {Inject one tamper scenario};
+\node[step, below=of s5] (s6) {Verify detection and traceability};
+\node[step, below=of s6] (s7) {Reset baseline and repeat};
+\node[step, below=of s7] (s8) {Run benchmark by record count};
+\draw[->] (s1) -- (s2);
+\draw[->] (s2) -- (s3);
+\draw[->] (s3) -- (s4);
+\draw[->] (s4) -- (s5);
+\draw[->] (s5) -- (s6);
+\draw[->] (s6) -- (s7);
+\draw[->] (s7) -- (s8);
+\end{tikzpicture}
+\caption{Experimental procedure for clean, tampered, and benchmark runs.}
+\label{fig:procedure}
+\end{figure}
+
+Warm-up runs are marked and excluded from the main benchmark summary. Median overhead is preferred over mean overhead because cloud compute state and cold start behavior can create outliers. The benchmark uses record counts of 1K, 5K, 10K, and 50K records.
