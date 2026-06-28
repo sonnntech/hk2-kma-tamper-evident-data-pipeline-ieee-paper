@@ -3,7 +3,7 @@ MAIN=main
 OUTDIR=build
 
 all:
-	$(LATEXMK) -xelatex -interaction=nonstopmode -halt-on-error -outdir=$(OUTDIR) $(MAIN).tex
+	$(LATEXMK) -pdf -interaction=nonstopmode -halt-on-error -outdir=$(OUTDIR) $(MAIN).tex
 
 clean:
 	$(LATEXMK) -C -outdir=$(OUTDIR) $(MAIN).tex
