@@ -1,7 +1,11 @@
 \documentclass[conference]{IEEEtran}
 
-\usepackage[utf8]{inputenc}
-\usepackage[T1]{fontenc}
+% Vietnamese requires XeLaTeX on Overleaf/GitHub Actions.
+\usepackage{fontspec}
+\setmainfont{TeX Gyre Termes}
+\setsansfont{TeX Gyre Heros}
+\setmonofont{TeX Gyre Cursor}
+
 \usepackage{cite}
 \usepackage{amsmath,amssymb}
 \usepackage{booktabs}
@@ -13,16 +17,15 @@
 \usepackage{url}
 \usepackage[hidelinks]{hyperref}
 
-\newcommand{\etal}{\textit{et al.}}
 \newcommand{\pipeline}{Source--Bronze--Silver--Gold}
+\newcommand{\hashledger}{Hash-linked Tamper-evident Ledger}
 
 \begin{document}
 
-\title{Quasi-Experimental Evaluation of a Hash-linked Tamper-evident Ledger for Data Pipeline Integrity Verification}
+\title{Đánh giá bán thực nghiệm cơ chế Hash-linked Tamper-evident Ledger nhằm kiểm chứng tính toàn vẹn dữ liệu trong hệ thống Data Pipeline}
 
-\author{\IEEEauthorblockN{Nguyen Ngoc Son}
-\IEEEauthorblockA{Faculty of Cyber Security\\
-KMA, Vietnam\\
+\author{\IEEEauthorblockN{Nguyễn Ngọc Sơn}
+\IEEEauthorblockA{Học viện Kỹ thuật Mật mã, Việt Nam\\
 Email: sonnn.tech@gmail.com}}
 
 \maketitle
