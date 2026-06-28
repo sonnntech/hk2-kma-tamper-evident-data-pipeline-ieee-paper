@@ -1,15 +1,15 @@
-\section{Experimental Evaluation}
+\section{Đánh giá thực nghiệm}
 
-\subsection{Detection Results}
+\subsection{Kết quả phát hiện tamper}
 
-The clean condition produced VALID verification outcomes in the dashboard export used as evidence for the non-tampered state. The tamper experiments produced non-VALID outcomes for all predefined tamper scenarios. Table~\ref{tab:results} summarizes the observed outcomes. The result supports H1 within the bounded set of evaluated scenarios.
+Điều kiện sạch tạo ra verification outcome là VALID trong dashboard export được dùng làm bằng chứng cho trạng thái không bị tamper. Các tamper experiments tạo ra outcome non-VALID cho tất cả tamper scenarios được định nghĩa trước. Bảng~\ref{tab:results} tóm tắt các outcome quan sát được. Kết quả hỗ trợ H1 trong phạm vi bounded set của các scenarios đã đánh giá.
 
 \begin{table}[t]
-\caption{Observed Verification Results}
+\caption{Kết quả verification quan sát được}
 \centering
 \begin{tabular}{p{0.42\linewidth}p{0.31\linewidth}p{0.12\linewidth}}
 \toprule
-\textbf{Scenario} & \textbf{Observed Outcome} & \textbf{Class} \\
+\textbf{Scenario} & \textbf{Outcome quan sát} & \textbf{Loại} \\
 \midrule
 NONE & VALID & TN \\
 MODIFY\_TRANSACTION\_AMOUNT & DATA\_TAMPERED & TP \\
@@ -23,34 +23,34 @@ MODIFY\_LEDGER\_PREVIOUS\_HASH & CHAIN\_BROKEN & TP \\
 \label{tab:results}
 \end{table}
 
-The observed detection rate is calculated as:
+Detection rate được tính theo công thức:
 
 \begin{equation}
 Detection\ Rate = \frac{TP}{TP + FN} \times 100\%.
 \end{equation}
 
-With six true positives and no observed false negative in the tampered scenarios, the detection rate is 100\% within the predefined test set. This result must not be interpreted as universal attack coverage. It only means that the mechanism detected the six tamper vectors selected for this experiment.
+Với sáu true positives và không quan sát thấy false negative trong các tampered scenarios, detection rate đạt 100\% trong test set được định nghĩa trước. Kết quả này không nên được hiểu là coverage phổ quát đối với mọi attack vector. Nó chỉ có nghĩa là cơ chế đã phát hiện sáu tamper vectors được lựa chọn trong thực nghiệm này.
 
-\subsection{Traceability Results}
+\subsection{Kết quả traceability}
 
-The verification engine reports a first broken block when a mismatch is found. This block can be joined with lineage events using the pipeline run identifier. The sample lineage flow records Source-to-Bronze, Bronze-to-Silver, and Silver-to-Gold transformations, including input record count, output record count, transformation context, and status. For the evaluated tamper scenarios, the recorded first broken block and lineage context matched the affected stage at a coarse stage level. This supports H2, with the limitation that some stage values were recorded as approximate in the source report and should be verified by direct SQL export for a stronger claim.
+Verification engine trả về first broken block khi phát hiện mismatch. Block này có thể được join với lineage events thông qua pipeline run identifier. Lineage flow mẫu ghi nhận các transformation Source-to-Bronze, Bronze-to-Silver và Silver-to-Gold, bao gồm input record count, output record count, transformation context và status. Đối với các tamper scenarios được đánh giá, first broken block và lineage context khớp với affected stage ở mức stage tổng quát. Điều này hỗ trợ H2, nhưng vẫn có giới hạn: một số giá trị stage trong source report được ghi nhận ở mức approximate và cần được xác minh bằng SQL export trực tiếp để có kết luận mạnh hơn.
 
-\subsection{Overhead Results}
+\subsection{Kết quả overhead}
 
-Security overhead is computed as:
+Security overhead được tính theo công thức:
 
 \begin{equation}
 Overhead = \frac{SecuredDuration - BaselineDuration}{BaselineDuration} \times 100\%.
 \end{equation}
 
-The approximate dashboard values show overhead increasing from about 160\% at 1K records to about 220\% at 50K records. Table~\ref{tab:overhead} summarizes the observed trend. The 5K case is close to the 1K case, which suggests the influence of cloud runtime variance. Overall, the evidence supports H3 with caveats.
+Các giá trị xấp xỉ từ dashboard cho thấy overhead tăng từ khoảng 160\% ở mức 1K records lên khoảng 220\% ở mức 50K records. Bảng~\ref{tab:overhead} tóm tắt xu hướng quan sát được. Trường hợp 5K gần với 1K, cho thấy khả năng có ảnh hưởng của cloud runtime variance. Nhìn chung, bằng chứng hỗ trợ H3 nhưng kèm caveats.
 
 \begin{table}[t]
-\caption{Approximate Runtime Overhead by Record Count}
+\caption{Runtime overhead xấp xỉ theo record count}
 \centering
 \begin{tabular}{p{0.30\linewidth}p{0.33\linewidth}p{0.22\linewidth}}
 \toprule
-\textbf{Record Count} & \textbf{Approx. Overhead} & \textbf{Evidence Type} \\
+\textbf{Record Count} & \textbf{Overhead xấp xỉ} & \textbf{Bằng chứng} \\
 \midrule
 1K & $\sim$160\% & Dashboard \\
 5K & $\sim$155--160\% & Dashboard \\
@@ -61,10 +61,10 @@ The approximate dashboard values show overhead increasing from about 160\% at 1K
 \label{tab:overhead}
 \end{table}
 
-Verification latency ranged from approximately 24 seconds to 31 seconds in recent runs, with one higher outlier. This observation is consistent with the quasi-experimental assumption that cold start and cloud compute scheduling cannot be fully controlled.
+Verification latency dao động xấp xỉ từ 24 giây đến 31 giây trong các runs gần nhất, với một outlier cao hơn. Quan sát này phù hợp với giả định bán thực nghiệm rằng cold start và cloud compute scheduling không thể được kiểm soát hoàn toàn.
 
-\subsection{Discussion}
+\subsection{Thảo luận}
 
-The experimental evidence indicates that a hash-linked ledger can make post-execution tampering visible in a multi-stage pipeline. The mechanism is especially useful when the objective is not to prevent privileged writes directly, but to make unauthorized modification detectable during later verification. This aligns with tamper-evident design rather than tamper-proof design.
+Bằng chứng thực nghiệm cho thấy Hash-linked Ledger có thể làm cho hành vi tamper sau xử lý trở nên quan sát được trong pipeline nhiều stage. Cơ chế này đặc biệt hữu ích khi mục tiêu không phải là ngăn chặn trực tiếp privileged writes, mà là phát hiện modification trái phép trong quá trình verification về sau. Điều này phù hợp với thiết kế tamper-evident, không phải tamper-proof.
 
-The result also clarifies the role of the word blockchain. The prototype uses a blockchain-inspired hash chain, but it does not implement distributed consensus, replicated nodes, mining, proof-of-work, proof-of-stake, or smart contracts. Therefore, the more precise term is hash-linked tamper-evident ledger. This distinction is important for construct validity and prevents overclaiming.
+Kết quả cũng làm rõ vai trò của thuật ngữ Blockchain. Nguyên mẫu sử dụng hash chain lấy cảm hứng từ Blockchain, nhưng không triển khai distributed consensus, replicated nodes, mining, proof-of-work, proof-of-stake hoặc smart contracts. Vì vậy, thuật ngữ chính xác hơn là Hash-linked Tamper-evident Ledger. Sự phân biệt này quan trọng đối với construct validity và giúp tránh overclaiming.
